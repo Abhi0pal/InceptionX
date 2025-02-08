@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container">
+  <br>
+  <div class="row">
+    <div class="col-md-6 classy_frame" style="padding-top: 0%;">
+      <center><h3 style="text-transform: capitalize;">Classify Your Waste Material</h3></center>
+      <img id="preview" src="{{ url_for('static', filename = 'images/reuse.png') }}" height="400px" width="100%" title="client pic">
+      
+      <center>
+        <br>
+        <div class="image-upload" >
+          <p style="color:wheat;" id="upload-web">Click the image upload icon below to upload an image.</p>
+          <p style="color:wheat;" id="upload-mobile">Click the camera icon below to take a picture.</p>
+          
+          <label for="file" align="center">
+              <img id="upload-web" src="{{ url_for('static', filename = 'images/upload.png') }}"/>
+              <img id="upload-mobile" src="{{ url_for('static', filename = 'images/camera.png') }}"/>
+          </label>
+          <input type="file" name="file" id="file" onchange="previewImage()">
+        </div>
+
+        <br>
+        <button class="classify-button" onclick="classifyWaste()">Classify your waste material</button>
+      </center>
+      <br>
+    </div>
+
+    <div class="col-md-6 classy_frame" style="padding-top: 0%;" id="about">
+      <center><h3 style="text-transform: capitalize;">About</h3></center>
+      <h4>
+        The world generates at least 3.5 million tons of waste per day, and this number is still increasing day by day.
+        That's why we need to be aware of waste.<br><br>
+        This app helps you classify your waste into 9 different categories. Recycling these waste materials is very challenging,
+        and even at recycling factories, classification is difficult.<br><br>
+        But what if everyone used 9 separate trash bins for different waste materials? This would greatly help cleaners and
+        recycling plants efficiently manage waste.<br><br>
+        Around 70% of waste is not recycled simply because it is not properly classified. Let's change that.
+      </h4>
+    </div>
+  </div>
+
+  <div id="loading" style="display: none; text-align: center;">
+    <h3>Processing...</h3>
+  </div>
+
+  <div class="row" id="recycling-videos" style="display: none;">
+    <br>
+    <hr>
+    <h3 id="video-title"></h3>
+    <div class="col-md-6 classy_frame" style="padding-top: 0%; padding-bottom: 2%;">
+      <div class="embed-responsive embed-responsive-16by9"> 
+        <iframe id="video1" width="560" height="315" frameborder="0" allowfullscreen></iframe>
+      </div>
+    </div>
+    <div class="col-md-6 classy_frame" style="padding-top: 0%; padding-bottom: 2%;">
+      <div class="embed-responsive embed-responsive-16by9"> 
+        <iframe id="video2" width="560" height="315" frameborder="0" allowfullscreen></iframe>
+      </div>
+    </div>
+  </div>
+
+  <div id="errorPopup" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title" id="errorTitle"></h4>
+        </div>
+        <div class="modal-body">
+          <p id="errorMessage"></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function previewImage() {
+    var file = document.getElementById("file").files;
+    if (file.length > 0) {
+      var fileName = file[0].name;
+      var allowedExtensions = ["jpeg", "jpg", "png"];
+      var fileExtension = fileName.split('.').pop().toLowerCase();
+
+      if (allowedExtensions.includes(fileExtension)) {
+        var fileReader = new FileReader();
+        fileReader.onload = function (event) {
+          document.getElementById("preview").setAttribute("src", event.target.result);
+        };
+        fileReader.readAsDataURL(file[0]);
+      } else {
+        document.getElementById("file").value = "";
+        document.getElementById("errorTitle").innerHTML = "Error - Only Image File Acceptable";
+        document.getElementById("errorMessage").innerHTML = "We only accept images with .jpeg, .jpg, or .png extensions.";
+        $("#errorPopup").modal("show");
+      }
+    }
+  }
+
+  function classifyWaste() {
+    var file = document.getElementById("file").files;
+    if (file.length > 0) {
+      document.getElementById("loading").style.display = "block";
+
+      var formData = new FormData();
+      formData.append("file", file[0]);
+
+      fetch("{{ url_for('classifywaste') }}", {
+        method: "POST",
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("recycling-videos").style.display = "block";
+
+        var predicted_value = data["predicted_value"];
+        var details = data["details"];
+        var video1 = data["video1"];
+        var video2 = data["video2"];
+
+        document.getElementById("about").innerHTML =
+          "<center><h3>Waste classified as <b style='background-color: #0b2438;'>" +
+          predicted_value +
+          "</b> material</h3></center><h4>" + details + "</h4>";
+
+        document.getElementById("video-title").innerHTML = "How " + predicted_value + " Recycling Works?";
+
+        document.getElementById("video1").setAttribute("src", "https://www.youtube.com/embed/" + video1);
+        document.getElementById("video2").setAttribute("src", "https://www.youtube.com/embed/" + video2);
+      })
+      .catch(error => {
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("errorTitle").innerHTML = "Error - Classification Failed";
+        document.getElementById("errorMessage").innerHTML = "Something went wrong. Please try again.";
+        $("#errorPopup").modal("show");
+      });
+    } else {
+      document.getElementById("errorTitle").innerHTML = "Error - Image not uploaded";
+      document.getElementById("errorMessage").innerHTML = "Please upload an image of your waste material.";
+      $("#errorPopup").modal("show");
+    }
+  }
+</script>
+
+{% endblock %}
