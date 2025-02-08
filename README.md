@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Awareness of Waste Recycling :india:
 ![GIF](static/images/awareness_of_waste_recycling.png)
 
@@ -70,3 +71,6 @@ Link: [http://wasterecycling-env.eba-xcpktyd2.us-east-2.elasticbeanstalk.com/](h
 
 ## 
 - If you like my work and it helped you in anyway then please do ⭐ the repository it will motivate me to make more amazing projects
+=======
+# InceptionX
+>>>>>>> e07d6c983fdc7610d49eca5040e3a7ddfea5b792
